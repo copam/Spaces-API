@@ -6,8 +6,9 @@ class SpacesConnect {
   Written by Devang Srivastava for Dev Uncoded.
   Available under MIT License ( https://opensource.org/licenses/MIT )
   */
+    private $proxy;
 
-    function __construct($access_key, $secret_key, $spaceName = "", $region = "nyc3", $host = "digitaloceanspaces.com") {
+    function __construct($access_key, $secret_key, $spaceName = "", $region = "nyc3", $host = "digitaloceanspaces.com", $proxy = []) {
 
         //Only pulled if an AWS class doesn't already exist.
         $non_composer_aws_lib = dirname(__FILE__)."/aws/autoloader.php";
@@ -26,21 +27,25 @@ class SpacesConnect {
              throw new SpacesAPIException(@json_encode(["error" => ["message" => "No AWS class loaded.", "code" => "no_aws_class", "type" => "init"]]));
            }
         }
+
         try {
           $this->client = Aws\S3\S3Client::factory(array(
             'region' => $region,
             'version' => 'latest',
             'endpoint' => $endpoint,
+            'http' => $proxy,
             'credentials' => array(
-                      'key'    => $access_key,
-                      'secret' => $secret_key,
-                  ),
+              'key'    => $access_key,
+              'secret' => $secret_key,
+            ),
             'bucket_endpoint' => true,
             'signature_version' => 'v4-unsigned-body'
           ));
+
         } catch (\Exception $e) {
           $this->HandleAWSException($e);
         }
+
         $this->space = $spaceName;
         $this->access_key = $access_key;
         $this->secret_key = $secret_key;
@@ -93,7 +98,7 @@ class SpacesConnect {
     /*
       Changes your current Space, Region and/or Host.
     */
-    function SetSpace($spaceName, $region = "", $host = "") {
+    function SetSpace($spaceName, $region = "", $host = "", $proxy = []) {
         if(empty($region)) { $region = $this->region; }
         if(empty($host)) { $host = $this->host; }
         if(!empty($spaceName)) {
@@ -108,6 +113,7 @@ class SpacesConnect {
             'region' => $region,
             'version' => 'latest',
             'endpoint' => $endpoint,
+            'http' => $proxy,
             'credentials' => array(
                       'key'    => $this->access_key,
                       'secret' => $this->secret_key,
